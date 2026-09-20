@@ -3,5 +3,6 @@ dist/
 frontend/dist/
 .wrangler/
 .dev.vars
+.env
 *.local
 .DS_Store
