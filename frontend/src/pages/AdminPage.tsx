@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { Fragment, useCallback, useEffect, useState } from "react";
+import { ChevronDown, ChevronRight, X } from "lucide-react";
 import { adminApi } from "../api";
 import { useStoredKey } from "../hooks/useStoredKey";
 import { useDialog } from "../hooks/useDialog";
-import type { BoardSummary, Manager, Stats } from "../types";
+import { PROJECT_STATUS_LABELS, PROJECT_STATUS_VALUES } from "../types";
+import type { BoardSummary, Manager, ProjectStatus, Stats } from "../types";
 
 /** Preserves row order (backend already sorts by board_name) while clustering rows under their board. */
 function groupByBoard<T extends { board_name: string }>(rows: T[]): [string, T[]][] {
@@ -29,6 +30,7 @@ export function AdminPage() {
   const [lastIssuedKey, setLastIssuedKey] = useState<{ who: string; key: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
+  const [expandedBoards, setExpandedBoards] = useState<Set<string>>(new Set());
 
   const load = useCallback(() => {
     if (!key) return;
@@ -154,6 +156,93 @@ export function AdminPage() {
             </dl>
           </div>
         )}
+      </section>
+
+      <section>
+        <h2>Daftar Project</h2>
+        <table className="table">
+          <thead>
+            <tr>
+              <th className="col-expand" style={{ width: "32px" }}></th>
+              <th>App</th>
+              <th>Manager</th>
+              <th>Visibilitas</th>
+              <th>Status</th>
+              <th>Module</th>
+            </tr>
+          </thead>
+          <tbody>
+            {boards.length === 0 && (
+              <tr className="empty">
+                <td colSpan={6}>Belum ada board.</td>
+              </tr>
+            )}
+            {boards.map((b) => {
+              const modules = (stats?.tasks_by_module ?? []).filter((r) => r.board_name === b.team_name);
+              const isOpen = expandedBoards.has(b.id);
+              return (
+                <Fragment key={b.id}>
+                  <tr>
+                    <td className="actions">
+                      <button
+                        className="text icon"
+                        aria-label={isOpen ? "Sembunyikan module" : "Tampilkan module"}
+                        onClick={() =>
+                          setExpandedBoards((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(b.id)) next.delete(b.id);
+                            else next.add(b.id);
+                            return next;
+                          })
+                        }
+                      >
+                        {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                      </button>
+                    </td>
+                    <td>{b.team_name}</td>
+                    <td>{b.managers.map((m) => m.name).join(", ") || <span className="muted">-</span>}</td>
+                    <td>
+                      <span className={`status${b.is_public ? "" : " off"}`}>{b.is_public ? "Publik" : "Privat"}</span>
+                    </td>
+                    <td>
+                      <select
+                        aria-label={`Status project ${b.team_name}`}
+                        value={b.status}
+                        onChange={(e) => adminApi.patchBoard(key, b.id, { status: e.target.value as ProjectStatus }).then(load)}
+                      >
+                        {PROJECT_STATUS_VALUES.map((s) => (
+                          <option key={s} value={s}>
+                            {PROJECT_STATUS_LABELS[s]}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>{modules.length}</td>
+                  </tr>
+                  {isOpen && (
+                    <tr>
+                      <td></td>
+                      <td colSpan={5}>
+                        {modules.length === 0 ? (
+                          <span className="muted">Belum ada module.</span>
+                        ) : (
+                          <dl className="ledger">
+                            {modules.map((r, i) => (
+                              <div key={`${r.module}-${i}`}>
+                                <dt>{r.module}</dt>
+                                <dd>{r.count}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
+          </tbody>
+        </table>
       </section>
 
       <section>

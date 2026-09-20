@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { managerApi } from "../api";
 import { KanbanBoard } from "../components/KanbanBoard";
 import { BoardPanels } from "../components/BoardPanels";
+import { ProjectView } from "../components/ProjectView";
 import { useStoredKey } from "../hooks/useStoredKey";
 import { useDialog } from "../hooks/useDialog";
 import type { Board, BoardSummary, Bucket, Task } from "../types";
@@ -16,6 +17,7 @@ export function ManagerPage() {
   const [board, setBoard] = useState<Board | null>(null);
   const [openTicketCount, setOpenTicketCount] = useState(0);
   const [error, setError] = useState("");
+  const [view, setView] = useState<"board" | "project">("board");
 
   const loadBoardList = useCallback(() => {
     if (!key) return;
@@ -115,8 +117,26 @@ export function ManagerPage() {
       <header className="topbar">
         <div className="topbar-title">
           <span className="eyebrow">Team board</span>
+          <h1>{board?.team_name ?? "…"}</h1>
+        </div>
+        <div className="topbar-actions">
           <div className="row">
-            <h1>{board?.team_name ?? "…"}</h1>
+            <button
+              className={`ghost toggle${view === "board" ? " on" : ""}`}
+              aria-pressed={view === "board"}
+              onClick={() => setView("board")}
+            >
+              Board
+            </button>
+            <button
+              className={`ghost toggle${view === "project" ? " on" : ""}`}
+              aria-pressed={view === "project"}
+              onClick={() => setView("project")}
+            >
+              Project
+            </button>
+          </div>
+          <div className="row">
             {boards.length > 1 && (
               <select
                 aria-label="Pilih board"
@@ -133,20 +153,24 @@ export function ManagerPage() {
                 ))}
               </select>
             )}
+            <Link className="text" to={`/board/tickets?board=${selectedBoardId}`}>
+              Tiket masuk{openTicketCount > 0 && <span className="badge">{openTicketCount}</span>}
+            </Link>
+            <button className="text" onClick={() => setKey("")}>
+              Keluar
+            </button>
           </div>
-        </div>
-        <div className="row">
-          <Link className="text" to={`/board/tickets?board=${selectedBoardId}`}>
-            Tiket masuk{openTicketCount > 0 && <span className="badge">{openTicketCount}</span>}
-          </Link>
-          <button className="text" onClick={() => setKey("")}>
-            Keluar
-          </button>
         </div>
       </header>
 
       {!board ? (
         <div className="kanban muted">Memuat…</div>
+      ) : view === "project" ? (
+        <ProjectView
+          board={board}
+          onSaveModules={(modules) => managerApi.patchSettings(key, board.id, { modules }).then(loadBoard, fail)}
+          onSaveStatus={(status) => managerApi.patchSettings(key, board.id, { status }).then(loadBoard, fail)}
+        />
       ) : (
         <>
         <BoardPanels

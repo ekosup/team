@@ -25,6 +25,24 @@ export type Task = {
 
 export type Priority = "low" | "normal" | "high";
 
+export type ProjectStatus = "development" | "staging" | "production" | "maintenance" | "retired";
+
+export const PROJECT_STATUS_VALUES: ProjectStatus[] = [
+  "development",
+  "staging",
+  "production",
+  "maintenance",
+  "retired",
+];
+
+export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
+  development: "Development",
+  staging: "Staging",
+  production: "Production",
+  maintenance: "Maintenance",
+  retired: "Retired",
+};
+
 export type Manager = {
   id: string;
   name: string;
@@ -41,6 +59,9 @@ export type Board = {
   allowed_emails: string[];
   /** PIC names offered in the task dropdown */
   assignees: string[];
+  /** curated module names for the App > Module project view */
+  modules: string[];
+  status: ProjectStatus;
   /** public endpoint only: allow-list is hidden, this says whether /t/:slug is open */
   tickets_enabled?: boolean;
   buckets: Bucket[];
@@ -67,6 +88,7 @@ export type BoardSummary = {
   team_name: string;
   public_slug: string;
   is_public: number;
+  status: ProjectStatus;
   created_at: string;
   managers: Manager[];
 };

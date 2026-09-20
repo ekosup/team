@@ -9,9 +9,12 @@ export const createBoardSchema = z.object({
   manager_ids: z.array(z.string().min(1)).min(1),
 });
 
+export const projectStatusValues = ["development", "staging", "production", "maintenance", "retired"] as const;
+
 export const patchBoardSchema = z.object({
   team_name: z.string().min(1).max(120).optional(),
   is_public: z.boolean().optional(),
+  status: z.enum(projectStatusValues).optional(),
   manager_ids: z.array(z.string().min(1)).min(1).optional(),
 });
 
@@ -73,6 +76,8 @@ const emailPattern = z
 export const patchBoardSettingsSchema = z.object({
   allowed_emails: z.array(emailPattern).max(200).optional(),
   assignees: z.array(z.string().trim().min(1).max(80)).max(100).optional(),
+  modules: z.array(z.string().trim().min(1).max(80)).max(100).optional(),
+  status: z.enum(projectStatusValues).optional(),
 });
 
 export const ticketListQuerySchema = z.object({

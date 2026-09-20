@@ -17,6 +17,9 @@ export type BoardRow = {
   allowed_emails: string;
   /** JSON array of PIC names */
   assignees: string;
+  /** JSON array of curated module names for this board (the "App > Module" listing) */
+  modules: string;
+  status: string;
   created_at: string;
 };
 

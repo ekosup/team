@@ -27,7 +27,12 @@ const SCHEMA = {
       {
         method: "PATCH",
         path: "/api/admin/boards/:id",
-        body: { team_name: "string?", is_public: "boolean?", manager_ids: "string[] (min 1)? — full replace" },
+        body: {
+          team_name: "string?",
+          is_public: "boolean?",
+          status: "'development'|'staging'|'production'|'maintenance'|'retired'?",
+          manager_ids: "string[] (min 1)? — full replace",
+        },
       },
       { method: "DELETE", path: "/api/admin/boards/:id" },
       {
@@ -42,13 +47,19 @@ const SCHEMA = {
     note: "a manager may be assigned to multiple boards; a board may have multiple managers",
     endpoints: [
       { method: "GET", path: "/api/manager/boards", returns: "board summaries this manager is assigned to" },
-      { method: "GET", path: "/api/manager/boards/:boardId", returns: "board with buckets + tasks + allowed_emails[] + assignees[]" },
+      {
+        method: "GET",
+        path: "/api/manager/boards/:boardId",
+        returns: "board with buckets + tasks + allowed_emails[] + assignees[] + modules[] + status",
+      },
       {
         method: "PATCH",
         path: "/api/manager/boards/:boardId",
         body: {
           allowed_emails: "string[]? — exact emails or '*@domain'; full replace; empty = nobody can send tickets",
           assignees: "string[]? — PIC names offered in the task dropdown; full replace",
+          modules: "string[]? — curated module names for the App > Module project view; full replace",
+          status: "'development'|'staging'|'production'|'maintenance'|'retired'? — project listing status",
         },
       },
       {

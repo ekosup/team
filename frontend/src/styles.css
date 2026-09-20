@@ -318,6 +318,7 @@ button.icon svg {
   width: 40px;
   height: 40px;
   background: var(--surface);
+  color: var(--ink);
   border: 1px solid var(--line-strong);
   border-radius: 999px;
   box-shadow: 0 2px 8px oklch(0 0 0 / 0.15);
@@ -386,7 +387,7 @@ button.icon svg {
 /* ------------------------------------------------------------------ */
 .topbar {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-lg);
   padding: var(--space-xl) var(--space-2xl) var(--space-lg);
@@ -399,11 +400,14 @@ button.icon svg {
   gap: var(--space-xs);
 }
 
-.topbar-title .row {
-  gap: var(--space-md);
+.topbar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-sm);
 }
 
-.topbar-title select {
+.topbar select {
   width: auto;
   padding-block: 4px;
   font-size: var(--text-xs);
@@ -468,9 +472,15 @@ button.icon svg {
   padding-block: 5px;
 }
 
-.kanban-toolbar .toggle.on {
+.toggle.on {
   background: var(--accent);
   border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.toggle.on:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
   color: var(--accent-ink);
 }
 
@@ -541,7 +551,7 @@ button.icon svg {
 
 .column-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-sm);
   padding-bottom: var(--space-sm);
   margin-bottom: var(--space-xs);
@@ -631,6 +641,7 @@ button.icon svg {
   border-bottom-color: var(--line-strong);
   border-radius: 0;
   padding-inline: 0;
+  padding-block: 4px;
   background: transparent;
 }
 

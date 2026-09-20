@@ -29,7 +29,11 @@ export const adminApi = {
       headers: authHeader(key),
       body: JSON.stringify({ team_name, manager_ids }),
     }),
-  patchBoard: (key: string, id: string, patch: { team_name?: string; is_public?: boolean; manager_ids?: string[] }) =>
+  patchBoard: (
+    key: string,
+    id: string,
+    patch: { team_name?: string; is_public?: boolean; status?: import("./types").ProjectStatus; manager_ids?: string[] }
+  ) =>
     request<{ board: import("./types").BoardSummary }>(`/api/admin/boards/${id}`, {
       method: "PATCH",
       headers: authHeader(key),
@@ -94,7 +98,16 @@ export const managerApi = {
       method: "POST",
       headers: authHeader(key),
     }),
-  patchSettings: (key: string, boardId: string, patch: { allowed_emails?: string[]; assignees?: string[] }) =>
+  patchSettings: (
+    key: string,
+    boardId: string,
+    patch: {
+      allowed_emails?: string[];
+      assignees?: string[];
+      modules?: string[];
+      status?: import("./types").ProjectStatus;
+    }
+  ) =>
     request(`/api/manager/boards/${boardId}`, { method: "PATCH", headers: authHeader(key), body: JSON.stringify(patch) }),
   listTickets: (key: string, boardId: string, params: { status?: string; page?: number; limit?: number } = {}) => {
     const qs = new URLSearchParams();

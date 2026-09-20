@@ -31,12 +31,41 @@ export function AssigneeSelect({
   );
 }
 
+/** Module dropdown from the board's curated module list. A value not in the list (legacy free text) stays selectable. */
+export function ModuleSelect({
+  modules,
+  value,
+  onChange,
+}: {
+  modules: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const options = value && !modules.includes(value) ? [value, ...modules] : modules;
+  return (
+    <select
+      aria-label="Module"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      title={modules.length === 0 ? "Tambah daftar module di tampilan Project" : undefined}
+    >
+      <option value="">{modules.length === 0 ? "Module belum diatur" : "Tanpa module"}</option>
+      {options.map((m) => (
+        <option key={m} value={m}>
+          {m}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export function TaskCard({
   task,
   flags,
   readOnly,
   buckets,
   assignees,
+  modules,
   onUpdate,
   onArchive,
   onDragStart,
@@ -47,6 +76,7 @@ export function TaskCard({
   readOnly: boolean;
   buckets: Bucket[];
   assignees: string[];
+  modules: string[];
   onUpdate: (patch: Partial<Task>) => void;
   onArchive: () => void;
   onDragStart?: (e: DragEvent) => void;
@@ -60,6 +90,7 @@ export function TaskCard({
         task={task}
         buckets={buckets}
         assignees={assignees}
+        modules={modules}
         onSave={(patch) => {
           onUpdate(patch);
           setEditing(false);
@@ -162,12 +193,14 @@ function EditTaskForm({
   task,
   buckets,
   assignees,
+  modules,
   onSave,
   onCancel,
 }: {
   task: Task;
   buckets: Bucket[];
   assignees: string[];
+  modules: string[];
   onSave: (patch: Partial<Task>) => void;
   onCancel: () => void;
 }) {
@@ -206,7 +239,7 @@ function EditTaskForm({
       <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Judul" required />
       <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Deskripsi" />
       <div className="row">
-        <input value={module} onChange={(e) => setModule(e.target.value)} placeholder="Module" />
+        <ModuleSelect modules={modules} value={module} onChange={setModule} />
         <input value={target} onChange={(e) => setTarget(e.target.value)} placeholder="Target" />
       </div>
       <div className="row">

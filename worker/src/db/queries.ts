@@ -129,7 +129,7 @@ export async function listBoards(db: D1Database): Promise<BoardWithManagers[]> {
 export async function patchBoard(
   db: D1Database,
   id: string,
-  patch: { team_name?: string; is_public?: boolean }
+  patch: { team_name?: string; is_public?: boolean; status?: string }
 ): Promise<void> {
   const fields: string[] = [];
   const values: unknown[] = [];
@@ -141,6 +141,10 @@ export async function patchBoard(
     fields.push("is_public = ?");
     values.push(patch.is_public ? 1 : 0);
   }
+  if (patch.status !== undefined) {
+    fields.push("status = ?");
+    values.push(patch.status);
+  }
   if (fields.length === 0) return;
   values.push(id);
   await db.prepare(`UPDATE boards SET ${fields.join(", ")} WHERE id = ?`).bind(...values).run();
@@ -149,7 +153,7 @@ export async function patchBoard(
 export async function patchBoardSettings(
   db: D1Database,
   id: string,
-  patch: { allowed_emails?: string[]; assignees?: string[] }
+  patch: { allowed_emails?: string[]; assignees?: string[]; modules?: string[]; status?: string }
 ): Promise<void> {
   const fields: string[] = [];
   const values: unknown[] = [];
@@ -160,6 +164,14 @@ export async function patchBoardSettings(
   if (patch.assignees) {
     fields.push("assignees = ?");
     values.push(JSON.stringify(patch.assignees));
+  }
+  if (patch.modules) {
+    fields.push("modules = ?");
+    values.push(JSON.stringify(patch.modules));
+  }
+  if (patch.status !== undefined) {
+    fields.push("status = ?");
+    values.push(patch.status);
   }
   if (fields.length === 0) return;
   values.push(id);
@@ -176,7 +188,7 @@ export function boardJson(board: BoardRow) {
       return [];
     }
   };
-  return { ...board, allowed_emails: list(board.allowed_emails), assignees: list(board.assignees) };
+  return { ...board, allowed_emails: list(board.allowed_emails), assignees: list(board.assignees), modules: list(board.modules) };
 }
 
 export async function deleteBoard(db: D1Database, id: string): Promise<void> {

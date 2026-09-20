@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties, type DragEvent } from "react";
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import type { Board, Bucket, Task } from "../types";
-import { ArchivedTaskRow, AssigneeSelect, TaskCard } from "./TaskCard";
+import { ArchivedTaskRow, AssigneeSelect, ModuleSelect, TaskCard } from "./TaskCard";
 import { needsAttention, taskFlags } from "../lib/task";
 
 export type KanbanBoardProps = {
@@ -277,6 +277,7 @@ export function KanbanBoard({
                     readOnly={readOnly}
                     buckets={buckets}
                     assignees={board.assignees}
+                    modules={board.modules}
                     onUpdate={(patch) => onUpdateTask?.(task, patch)}
                     onArchive={() => onArchiveTask?.(task)}
                     onDragStart={
@@ -298,7 +299,11 @@ export function KanbanBoard({
               {dropHere === tasks.length && <div className="drop-line" />}
 
               {!readOnly && (
-                <NewTaskForm assignees={board.assignees} onCreate={(input) => onCreateTask?.(bucket.id, input)} />
+                <NewTaskForm
+                  assignees={board.assignees}
+                  modules={board.modules}
+                  onCreate={(input) => onCreateTask?.(bucket.id, input)}
+                />
               )}
 
               {archivedTasks.length > 0 && (
@@ -400,7 +405,15 @@ function ColumnTitle({
   );
 }
 
-function NewTaskForm({ assignees, onCreate }: { assignees: string[]; onCreate: (input: Partial<Task>) => void }) {
+function NewTaskForm({
+  assignees,
+  modules,
+  onCreate,
+}: {
+  assignees: string[];
+  modules: string[];
+  onCreate: (input: Partial<Task>) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [module, setModule] = useState("");
@@ -441,7 +454,7 @@ function NewTaskForm({ assignees, onCreate }: { assignees: string[]; onCreate: (
     >
       <input autoFocus placeholder="Judul task" value={title} onChange={(e) => setTitle(e.target.value)} />
       <div className="row">
-        <input placeholder="Module" value={module} onChange={(e) => setModule(e.target.value)} />
+        <ModuleSelect modules={modules} value={module} onChange={setModule} />
         <input placeholder="Target" value={target} onChange={(e) => setTarget(e.target.value)} />
       </div>
       <AssigneeSelect assignees={assignees} value={assignee} onChange={setAssignee} />
