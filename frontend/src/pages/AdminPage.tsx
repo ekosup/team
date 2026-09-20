@@ -182,7 +182,7 @@ export function AdminPage() {
               const isOpen = expandedBoards.has(b.id);
               return (
                 <Fragment key={b.id}>
-                  <tr>
+                  <tr className="row-align-middle">
                     <td className="actions">
                       <button
                         className="text icon"
