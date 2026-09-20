@@ -58,7 +58,7 @@ const SCHEMA = {
         body: {
           allowed_emails: "string[]? — exact emails or '*@domain'; full replace; empty = nobody can send tickets",
           assignees: "string[]? — PIC names offered in the task dropdown; full replace",
-          modules: "string[]? — curated module names for the App > Module project view; full replace",
+          modules: "{name, description}[]? — curated modules for the App > Module project view; full replace",
           status: "'development'|'staging'|'production'|'maintenance'|'retired'? — project listing status",
         },
       },
@@ -116,6 +116,21 @@ const SCHEMA = {
         path: "/api/manager/boards/:boardId/tasks/:id",
         note: "409 unless the task is archived first — archive is the only path to delete",
       },
+      {
+        method: "GET",
+        path: "/api/manager/boards/:boardId/docs",
+        returns: "team knowledge repo entries (runbooks, notes, secrets); secret entries omit content — fetch by id to reveal",
+      },
+      { method: "GET", path: "/api/manager/boards/:boardId/docs/:id", returns: "doc with content decrypted if is_secret" },
+      {
+        method: "POST",
+        path: "/api/manager/boards/:boardId/docs",
+        body: { title: "string", content: "string", is_secret: "boolean? (default false)", position: "number?" },
+        note: "is_secret content is AES-GCM encrypted at rest with the worker's DOCS_ENC_KEY",
+      },
+      { method: "PATCH", path: "/api/manager/boards/:boardId/docs/:id", body: "same fields as create, all optional" },
+      { method: "PATCH", path: "/api/manager/boards/:boardId/docs/order", body: { ids: "string[] — full doc order" } },
+      { method: "DELETE", path: "/api/manager/boards/:boardId/docs/:id" },
     ],
   },
   public: {

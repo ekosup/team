@@ -8,6 +8,8 @@ export type ManagerRow = {
 
 export type PublicManager = Omit<ManagerRow, "access_key_hash">;
 
+export type BoardModule = { name: string; description: string };
+
 export type BoardRow = {
   id: string;
   team_name: string;
@@ -17,7 +19,7 @@ export type BoardRow = {
   allowed_emails: string;
   /** JSON array of PIC names */
   assignees: string;
-  /** JSON array of curated module names for this board (the "App > Module" listing) */
+  /** JSON array of curated {name, description} module entries for this board (the "App > Module" listing) */
   modules: string;
   status: string;
   created_at: string;
@@ -70,3 +72,20 @@ export type BoardWithContent = BoardRow & {
   buckets: BucketRow[];
   tasks: TaskRow[];
 };
+
+export type DocRow = {
+  id: string;
+  board_id: string;
+  title: string;
+  /** null when is_secret; plain markdown otherwise */
+  content: string | null;
+  is_secret: number;
+  /** AES-GCM ciphertext (base64: iv + data), set only when is_secret */
+  content_enc: string | null;
+  position: number;
+  created_at: string;
+  updated_at: string;
+};
+
+/** DocRow with content_enc stripped — safe to return from list endpoints */
+export type DocSummary = Omit<DocRow, "content_enc">;

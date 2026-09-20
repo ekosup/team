@@ -43,6 +43,8 @@ export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   retired: "Retired",
 };
 
+export type BoardModule = { name: string; description: string };
+
 export type Manager = {
   id: string;
   name: string;
@@ -59,8 +61,8 @@ export type Board = {
   allowed_emails: string[];
   /** PIC names offered in the task dropdown */
   assignees: string[];
-  /** curated module names for the App > Module project view */
-  modules: string[];
+  /** curated modules for the App > Module project view */
+  modules: BoardModule[];
   status: ProjectStatus;
   /** public endpoint only: allow-list is hidden, this says whether /t/:slug is open */
   tickets_enabled?: boolean;
@@ -91,6 +93,18 @@ export type BoardSummary = {
   status: ProjectStatus;
   created_at: string;
   managers: Manager[];
+};
+
+export type Doc = {
+  id: string;
+  board_id: string;
+  title: string;
+  /** Tiptap JSON doc, serialized; null on list rows when is_secret (fetch by id to reveal) */
+  content: string | null;
+  is_secret: number;
+  position: number;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Stats = {

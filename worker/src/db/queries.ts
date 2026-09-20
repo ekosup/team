@@ -1,8 +1,11 @@
 import type {
+  BoardModule,
   BoardRow,
   BoardWithContent,
   BoardWithManagers,
   BucketRow,
+  DocRow,
+  DocSummary,
   ManagerRow,
   PublicManager,
   TaskRow,
@@ -153,7 +156,7 @@ export async function patchBoard(
 export async function patchBoardSettings(
   db: D1Database,
   id: string,
-  patch: { allowed_emails?: string[]; assignees?: string[]; modules?: string[]; status?: string }
+  patch: { allowed_emails?: string[]; assignees?: string[]; modules?: BoardModule[]; status?: string }
 ): Promise<void> {
   const fields: string[] = [];
   const values: unknown[] = [];
@@ -188,7 +191,18 @@ export function boardJson(board: BoardRow) {
       return [];
     }
   };
-  return { ...board, allowed_emails: list(board.allowed_emails), assignees: list(board.assignees), modules: list(board.modules) };
+  const modules = (s: string): BoardModule[] => {
+    try {
+      const v = JSON.parse(s);
+      if (!Array.isArray(v)) return [];
+      return v
+        .filter((x) => x && typeof x === "object" && typeof x.name === "string")
+        .map((x) => ({ name: x.name, description: typeof x.description === "string" ? x.description : "" }));
+    } catch {
+      return [];
+    }
+  };
+  return { ...board, allowed_emails: list(board.allowed_emails), assignees: list(board.assignees), modules: modules(board.modules) };
 }
 
 export async function deleteBoard(db: D1Database, id: string): Promise<void> {
@@ -491,6 +505,73 @@ export async function setTaskArchived(db: D1Database, id: string, archived: bool
     )
     .bind(archived ? 1 : 0, id)
     .run();
+}
+
+// ---- docs ----
+
+export async function listDocs(db: D1Database, boardId: string): Promise<DocSummary[]> {
+  const { results } = await db
+    .prepare("SELECT id, board_id, title, content, is_secret, position, created_at, updated_at FROM docs WHERE board_id = ? ORDER BY position")
+    .bind(boardId)
+    .all<DocSummary>();
+  return results;
+}
+
+export async function getDocById(db: D1Database, id: string): Promise<DocRow | null> {
+  return db.prepare("SELECT * FROM docs WHERE id = ?").bind(id).first<DocRow>();
+}
+
+export async function nextDocPosition(db: D1Database, boardId: string): Promise<number> {
+  const row = await db
+    .prepare("SELECT COALESCE(MAX(position), -1) + 1 AS pos FROM docs WHERE board_id = ?")
+    .bind(boardId)
+    .first<{ pos: number }>();
+  return row?.pos ?? 0;
+}
+
+export async function createDoc(
+  db: D1Database,
+  boardId: string,
+  doc: { title: string; content: string | null; content_enc: string | null; is_secret: boolean; position: number }
+): Promise<DocRow> {
+  const id = newId();
+  await db
+    .prepare(
+      "INSERT INTO docs (id, board_id, title, content, is_secret, content_enc, position) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    )
+    .bind(id, boardId, doc.title, doc.content, doc.is_secret ? 1 : 0, doc.content_enc, doc.position)
+    .run();
+  return getDocById(db, id) as Promise<DocRow>;
+}
+
+export async function patchDoc(
+  db: D1Database,
+  id: string,
+  patch: { title?: string; content?: string | null; content_enc?: string | null; is_secret?: boolean; position?: number }
+): Promise<void> {
+  const fields: string[] = [];
+  const values: unknown[] = [];
+  if (patch.title !== undefined) fields.push("title = ?"), values.push(patch.title);
+  if (patch.content !== undefined) fields.push("content = ?"), values.push(patch.content);
+  if (patch.content_enc !== undefined) fields.push("content_enc = ?"), values.push(patch.content_enc);
+  if (patch.is_secret !== undefined) fields.push("is_secret = ?"), values.push(patch.is_secret ? 1 : 0);
+  if (patch.position !== undefined) fields.push("position = ?"), values.push(patch.position);
+  if (fields.length === 0) return;
+  fields.push("updated_at = datetime('now')");
+  values.push(id);
+  await db.prepare(`UPDATE docs SET ${fields.join(", ")} WHERE id = ?`).bind(...values).run();
+}
+
+export async function deleteDoc(db: D1Database, id: string): Promise<void> {
+  await db.prepare("DELETE FROM docs WHERE id = ?").bind(id).run();
+}
+
+export async function reorderDocs(db: D1Database, boardId: string, ids: string[]): Promise<void> {
+  await db.batch(
+    ids.map((id, i) =>
+      db.prepare("UPDATE docs SET position = ? WHERE id = ? AND board_id = ?").bind(i, id, boardId)
+    )
+  );
 }
 
 // ---- stats ----

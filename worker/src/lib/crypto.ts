@@ -13,6 +13,31 @@ export async function hashAccessKey(key: string): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+async function docsEncKey(secret: string): Promise<CryptoKey> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret));
+  return crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+
+/** Encrypts secret doc content for storage; DOCS_ENC_KEY lives only in worker env, never in D1. */
+export async function encryptSecret(plain: string, secret: string): Promise<string> {
+  const key = await docsEncKey(secret);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(plain));
+  const out = new Uint8Array(iv.length + data.byteLength);
+  out.set(iv, 0);
+  out.set(new Uint8Array(data), iv.length);
+  return btoa(String.fromCharCode(...out));
+}
+
+export async function decryptSecret(ciphertext: string, secret: string): Promise<string> {
+  const key = await docsEncKey(secret);
+  const bytes = Uint8Array.from(atob(ciphertext), (c) => c.charCodeAt(0));
+  const iv = bytes.slice(0, 12);
+  const data = bytes.slice(12);
+  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+  return new TextDecoder().decode(plain);
+}
+
 /** ~40 bits of randomness in the suffix: the slug is the only key gating ticket intake, so it must resist guessing/enumeration. */
 export function slugify(input: string): string {
   const base = input

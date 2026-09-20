@@ -9,7 +9,11 @@ import {
   reorderTasksSchema,
   patchBoardSettingsSchema,
   ticketListQuerySchema,
+  createDocSchema,
+  patchDocSchema,
+  reorderDocsSchema,
 } from "../lib/schemas";
+import { encryptSecret, decryptSecret } from "../lib/crypto";
 import {
   boardJson,
   patchBoardSettings,
@@ -35,6 +39,13 @@ import {
   reorderTasks,
   setTaskArchived,
   acceptTicket,
+  listDocs,
+  getDocById,
+  nextDocPosition,
+  createDoc,
+  patchDoc,
+  deleteDoc,
+  reorderDocs,
 } from "../db/queries";
 
 const app = new Hono<AppEnv>();
@@ -244,6 +255,89 @@ app.delete("/boards/:boardId/tasks/:id", async (c) => {
   if (!task.archived_at) return c.json({ error: "arsipkan task ini dulu sebelum menghapus" }, 409);
 
   await deleteTask(c.env.DB, task.id);
+  return c.json({ ok: true });
+});
+
+// ---- docs (team knowledge repo: runbooks, notes, and encrypted secrets) ----
+
+app.get("/boards/:boardId/docs", async (c) => {
+  const board = await requireBoardAccess(c, c.req.param("boardId"));
+  if (!board) return c.json({ error: "not found" }, 404);
+  return c.json({ docs: await listDocs(c.env.DB, board.id) });
+});
+
+/** Only this endpoint decrypts secret content — list/board views never return it. */
+app.get("/boards/:boardId/docs/:id", async (c) => {
+  const board = await requireBoardAccess(c, c.req.param("boardId"));
+  if (!board) return c.json({ error: "not found" }, 404);
+  const doc = await getDocById(c.env.DB, c.req.param("id"));
+  if (!doc || doc.board_id !== board.id) return c.json({ error: "not found" }, 404);
+
+  const { content_enc, ...rest } = doc;
+  const content = doc.is_secret && content_enc ? await decryptSecret(content_enc, c.env.DOCS_ENC_KEY) : doc.content;
+  return c.json({ doc: { ...rest, content } });
+});
+
+app.post("/boards/:boardId/docs", async (c) => {
+  const board = await requireBoardAccess(c, c.req.param("boardId"));
+  if (!board) return c.json({ error: "not found" }, 404);
+  const parsed = createDocSchema.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+
+  const { title, content, is_secret, position } = parsed.data;
+  const doc = await createDoc(c.env.DB, board.id, {
+    title,
+    content: is_secret ? null : content,
+    content_enc: is_secret ? await encryptSecret(content, c.env.DOCS_ENC_KEY) : null,
+    is_secret,
+    position: position ?? (await nextDocPosition(c.env.DB, board.id)),
+  });
+  const { content_enc, ...rest } = doc;
+  return c.json({ doc: rest }, 201);
+});
+
+// must be registered before /docs/:id so "order" is not treated as an id
+app.patch("/boards/:boardId/docs/order", async (c) => {
+  const board = await requireBoardAccess(c, c.req.param("boardId"));
+  if (!board) return c.json({ error: "not found" }, 404);
+  const parsed = reorderDocsSchema.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+
+  await reorderDocs(c.env.DB, board.id, parsed.data.ids);
+  return c.json({ ok: true });
+});
+
+app.patch("/boards/:boardId/docs/:id", async (c) => {
+  const board = await requireBoardAccess(c, c.req.param("boardId"));
+  if (!board) return c.json({ error: "not found" }, 404);
+  const doc = await getDocById(c.env.DB, c.req.param("id"));
+  if (!doc || doc.board_id !== board.id) return c.json({ error: "not found" }, 404);
+
+  const parsed = patchDocSchema.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+
+  const isSecret = parsed.data.is_secret ?? doc.is_secret === 1;
+  const patch: Parameters<typeof patchDoc>[2] = { title: parsed.data.title, position: parsed.data.position };
+  if (parsed.data.is_secret !== undefined) patch.is_secret = parsed.data.is_secret;
+  if (parsed.data.content !== undefined || parsed.data.is_secret !== undefined) {
+    const nextContent = parsed.data.content ?? (doc.is_secret ? await decryptSecret(doc.content_enc!, c.env.DOCS_ENC_KEY) : doc.content!);
+    patch.content = isSecret ? null : nextContent;
+    patch.content_enc = isSecret ? await encryptSecret(nextContent, c.env.DOCS_ENC_KEY) : null;
+  }
+
+  await patchDoc(c.env.DB, doc.id, patch);
+  const updated = await getDocById(c.env.DB, doc.id);
+  const { content_enc, ...rest } = updated!;
+  return c.json({ doc: rest });
+});
+
+app.delete("/boards/:boardId/docs/:id", async (c) => {
+  const board = await requireBoardAccess(c, c.req.param("boardId"));
+  if (!board) return c.json({ error: "not found" }, 404);
+  const doc = await getDocById(c.env.DB, c.req.param("id"));
+  if (!doc || doc.board_id !== board.id) return c.json({ error: "not found" }, 404);
+
+  await deleteDoc(c.env.DB, doc.id);
   return c.json({ ok: true });
 });
 

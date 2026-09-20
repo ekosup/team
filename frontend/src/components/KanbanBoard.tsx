@@ -67,6 +67,7 @@ export function KanbanBoard({
   const modules = useUniqueValues(activeTasks, "module");
   const targets = useUniqueValues(activeTasks, "target");
   const assignees = useUniqueValues(activeTasks, "assignee");
+  const curatedModuleNames = board.modules.map((m) => m.name);
 
   const buckets = useMemo(() => [...board.buckets].sort((a, b) => a.position - b.position), [board.buckets]);
   // ponytail: rightmost column counts as "done" so its tasks never show as overdue; add an explicit flag if teams disagree
@@ -277,7 +278,7 @@ export function KanbanBoard({
                     readOnly={readOnly}
                     buckets={buckets}
                     assignees={board.assignees}
-                    modules={board.modules}
+                    modules={curatedModuleNames}
                     onUpdate={(patch) => onUpdateTask?.(task, patch)}
                     onArchive={() => onArchiveTask?.(task)}
                     onDragStart={
@@ -301,7 +302,7 @@ export function KanbanBoard({
               {!readOnly && (
                 <NewTaskForm
                   assignees={board.assignees}
-                  modules={board.modules}
+                  modules={curatedModuleNames}
                   onCreate={(input) => onCreateTask?.(bucket.id, input)}
                 />
               )}

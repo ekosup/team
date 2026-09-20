@@ -3,6 +3,7 @@ export type Bindings = {
   KV: KVNamespace;
   ASSETS: Fetcher;
   ADMIN_API_KEY: string;
+  DOCS_ENC_KEY: string;
 };
 
 export type Variables = {

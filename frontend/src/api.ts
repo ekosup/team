@@ -104,7 +104,7 @@ export const managerApi = {
     patch: {
       allowed_emails?: string[];
       assignees?: string[];
-      modules?: string[];
+      modules?: import("./types").BoardModule[];
       status?: import("./types").ProjectStatus;
     }
   ) =>
@@ -122,6 +122,35 @@ export const managerApi = {
   },
   resolveTicket: (key: string, boardId: string, id: string, action: "accept" | "reject") =>
     request(`/api/manager/boards/${boardId}/tickets/${id}/${action}`, { method: "POST", headers: authHeader(key) }),
+  listDocs: (key: string, boardId: string) =>
+    request<{ docs: import("./types").Doc[] }>(`/api/manager/boards/${boardId}/docs`, { headers: authHeader(key) }),
+  getDoc: (key: string, boardId: string, id: string) =>
+    request<{ doc: import("./types").Doc }>(`/api/manager/boards/${boardId}/docs/${id}`, { headers: authHeader(key) }),
+  createDoc: (key: string, boardId: string, input: { title: string; content: string; is_secret?: boolean }) =>
+    request<{ doc: import("./types").Doc }>(`/api/manager/boards/${boardId}/docs`, {
+      method: "POST",
+      headers: authHeader(key),
+      body: JSON.stringify(input),
+    }),
+  patchDoc: (
+    key: string,
+    boardId: string,
+    id: string,
+    patch: { title?: string; content?: string; is_secret?: boolean }
+  ) =>
+    request<{ doc: import("./types").Doc }>(`/api/manager/boards/${boardId}/docs/${id}`, {
+      method: "PATCH",
+      headers: authHeader(key),
+      body: JSON.stringify(patch),
+    }),
+  deleteDoc: (key: string, boardId: string, id: string) =>
+    request<{ ok: true }>(`/api/manager/boards/${boardId}/docs/${id}`, { method: "DELETE", headers: authHeader(key) }),
+  reorderDocs: (key: string, boardId: string, ids: string[]) =>
+    request<{ ok: true }>(`/api/manager/boards/${boardId}/docs/order`, {
+      method: "PATCH",
+      headers: authHeader(key),
+      body: JSON.stringify({ ids }),
+    }),
 };
 
 export const publicApi = {

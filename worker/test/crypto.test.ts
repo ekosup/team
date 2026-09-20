@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateAccessKey, hashAccessKey, slugify } from "../src/lib/crypto";
+import { decryptSecret, encryptSecret, generateAccessKey, hashAccessKey, slugify } from "../src/lib/crypto";
 
 describe("generateAccessKey", () => {
   it("produces a dash-separated key with no ambiguous chars", () => {
@@ -35,5 +35,24 @@ describe("slugify", () => {
 
   it("falls back to 'board' when input has no alnum chars", () => {
     expect(slugify("!!!")).toMatch(/^board-[a-z0-9]{8}$/);
+  });
+});
+
+describe("encryptSecret / decryptSecret", () => {
+  it("round-trips plaintext", async () => {
+    const cipher = await encryptSecret("db password: hunter2", "test-key");
+    expect(cipher).not.toContain("hunter2");
+    expect(await decryptSecret(cipher, "test-key")).toBe("db password: hunter2");
+  });
+
+  it("fails to decrypt with the wrong key", async () => {
+    const cipher = await encryptSecret("top secret", "key-a");
+    await expect(decryptSecret(cipher, "key-b")).rejects.toThrow();
+  });
+
+  it("produces different ciphertext for the same input (random IV)", async () => {
+    const a = await encryptSecret("same value", "test-key");
+    const b = await encryptSecret("same value", "test-key");
+    expect(a).not.toBe(b);
   });
 });

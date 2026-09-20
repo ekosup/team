@@ -73,10 +73,15 @@ const emailPattern = z
   .toLowerCase()
   .regex(/^(\*|[^\s@*]+)@[^\s@*]+\.[^\s@*]+$/, "use an email or *@domain");
 
+export const boardModuleSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  description: z.string().trim().max(300).optional().default(""),
+});
+
 export const patchBoardSettingsSchema = z.object({
   allowed_emails: z.array(emailPattern).max(200).optional(),
   assignees: z.array(z.string().trim().min(1).max(80)).max(100).optional(),
-  modules: z.array(z.string().trim().min(1).max(80)).max(100).optional(),
+  modules: z.array(boardModuleSchema).max(100).optional(),
   status: z.enum(projectStatusValues).optional(),
 });
 
@@ -92,6 +97,25 @@ export const createTicketSchema = z.object({
   description: z.string().max(4000).optional(),
   module: z.string().max(80).optional(),
   priority: z.enum(priorityValues).optional(),
+});
+
+// content is a Tiptap JSON document serialized to a string (semi-structured, editor-agnostic on the wire)
+export const createDocSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  content: z.string().max(100000),
+  is_secret: z.boolean().optional().default(false),
+  position: z.number().int().min(0).optional(),
+});
+
+export const patchDocSchema = z.object({
+  title: z.string().trim().min(1).max(120).optional(),
+  content: z.string().max(100000).optional(),
+  is_secret: z.boolean().optional(),
+  position: z.number().int().min(0).optional(),
+});
+
+export const reorderDocsSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1),
 });
 
 /** patterns: exact emails or "*@domain"; all lowercase. Empty list allows nobody. */

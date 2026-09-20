@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { publicApi } from "../api";
 import { KanbanBoard } from "../components/KanbanBoard";
+import { ProjectView } from "../components/ProjectView";
 import type { Board } from "../types";
 import { formatDateTime } from "../lib/task";
 
@@ -10,6 +11,7 @@ export function GuestPage() {
   const { slug = "" } = useParams();
   const [board, setBoard] = useState<Board | null>(null);
   const [error, setError] = useState("");
+  const [view, setView] = useState<"board" | "project">("board");
 
   useEffect(() => {
     publicApi
@@ -38,17 +40,35 @@ export function GuestPage() {
           <span className="eyebrow">Team board</span>
           <h1>{board.team_name}</h1>
         </div>
-        <div className="topbar-side">
-          <span className="eyebrow">Hanya lihat</span>
-          {lastUpdated && <span className="muted">Diperbarui {formatDateTime(lastUpdated)}</span>}
-          {board.tickets_enabled && (
-            <Link className="inline-link" to={`/t/${slug}`}>
-              Buat tiket <ArrowRight size={14} />
-            </Link>
-          )}
+        <div className="topbar-actions">
+          <div className="row">
+            <button
+              className={`ghost toggle${view === "board" ? " on" : ""}`}
+              aria-pressed={view === "board"}
+              onClick={() => setView("board")}
+            >
+              Board
+            </button>
+            <button
+              className={`ghost toggle${view === "project" ? " on" : ""}`}
+              aria-pressed={view === "project"}
+              onClick={() => setView("project")}
+            >
+              Project
+            </button>
+          </div>
+          <div className="topbar-side">
+            <span className="eyebrow">Hanya lihat</span>
+            {lastUpdated && <span className="muted">Diperbarui {formatDateTime(lastUpdated)}</span>}
+            {board.tickets_enabled && (
+              <Link className="inline-link" to={`/t/${slug}`}>
+                Buat tiket <ArrowRight size={14} />
+              </Link>
+            )}
+          </div>
         </div>
       </header>
-      <KanbanBoard board={board} readOnly />
+      {view === "project" ? <ProjectView board={board} readOnly /> : <KanbanBoard board={board} readOnly />}
     </div>
   );
 }

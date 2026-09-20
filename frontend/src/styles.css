@@ -199,7 +199,6 @@ select:focus-visible,
 textarea:focus-visible {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
 }
 
 input::placeholder,
@@ -341,6 +340,18 @@ button.icon svg {
   align-items: center;
 }
 
+.select-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--text-xs);
+  color: var(--ink-2);
+}
+
+.select-label select {
+  width: auto;
+}
+
 /* ------------------------------------------------------------------ */
 /* Gate: login / error / empty full-page states                       */
 /* ------------------------------------------------------------------ */
@@ -440,6 +451,10 @@ button.icon svg {
 /* ------------------------------------------------------------------ */
 .kanban {
   padding: var(--space-lg) var(--space-2xl) var(--space-3xl);
+}
+
+.kanban h2 {
+  margin-bottom: var(--space-lg);
 }
 
 .kanban-toolbar {
@@ -636,18 +651,32 @@ button.icon svg {
   border-bottom: 0;
 }
 
-.column.new-bucket input {
-  border-color: transparent;
-  border-bottom-color: var(--line-strong);
+.column.new-bucket input,
+.new-module input {
+  appearance: none;
+  border: none;
+  border-bottom: 1px solid var(--line-strong);
   border-radius: 0;
   padding-inline: 0;
   padding-block: 4px;
   background: transparent;
+  box-shadow: none;
 }
 
-.column.new-bucket input:focus-visible {
+.column.new-bucket input:focus-visible,
+.new-module input:focus-visible {
+  outline: none;
   box-shadow: none;
   border-bottom-color: var(--accent);
+}
+
+.new-module {
+  width: 100%;
+}
+
+.new-module input {
+  flex: 1;
+  width: auto;
 }
 
 /* task card */
@@ -935,6 +964,7 @@ button.icon svg {
 
 .ledger {
   margin: 0;
+  text-align: left;
 }
 
 .ledger .eyebrow {
@@ -961,6 +991,49 @@ button.icon svg {
 .ledger dd {
   margin: 0;
   font-weight: 600;
+}
+
+/* module rows carry a name + optional description, so unlike other ledgers they wrap onto two lines */
+.ledger-modules dt {
+  overflow: visible;
+  white-space: normal;
+  min-width: 0;
+  flex: 1;
+}
+
+.ledger-modules .module-name {
+  display: block;
+}
+
+input.module-name,
+input.module-desc {
+  display: block;
+  width: 100%;
+  appearance: none;
+  border: none;
+  border-bottom: 1px solid var(--line-strong);
+  border-radius: 0;
+  padding-inline: 0;
+  padding-block: 4px;
+  background: transparent;
+  box-shadow: none;
+}
+
+input.module-name:hover,
+input.module-desc:hover {
+  border-bottom-color: var(--ink-3);
+}
+
+input.module-name:focus-visible,
+input.module-desc:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-bottom-color: var(--accent);
+}
+
+.ledger-modules p.module-desc {
+  margin: 2px 0 0;
+  font-size: var(--text-xs);
 }
 
 /* groups rows under the board they belong to — bucket/module names repeat across boards */
@@ -1017,6 +1090,10 @@ button.icon svg {
 
 .table td.actions {
   white-space: nowrap;
+}
+
+.table tr.row-align-middle > td {
+  vertical-align: middle;
 }
 
 .table .status {
@@ -1276,4 +1353,178 @@ button.icon svg {
   justify-content: flex-end;
   gap: var(--space-sm);
   margin-top: var(--space-lg);
+}
+
+/* ------------------------------------------------------------------ */
+/* Docs                                                                */
+/* ------------------------------------------------------------------ */
+.docs-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: var(--space-2xl);
+  align-items: stretch;
+  min-height: calc(100vh - 260px);
+}
+
+.docs-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.docs-sidebar-head h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.docs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.docs-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: var(--ink-2);
+  border: 1px solid transparent;
+  padding: 6px 8px;
+  font-weight: 400;
+  font-size: var(--text-xs);
+}
+
+.docs-list-item:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.docs-list-item.on {
+  background: var(--surface-2);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.docs-list-item span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docs-lock {
+  color: var(--gold-fg);
+  flex: none;
+}
+
+.docs-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-left: 1px solid var(--line);
+  padding-left: var(--space-2xl);
+}
+
+.docs-content-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.docs-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
+  border-bottom: 1px solid var(--line);
+}
+
+.docs-toolbar button.on {
+  color: var(--accent);
+  background: var(--surface-2);
+}
+
+.docs-title-input {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+}
+
+.docs-title-input:hover,
+.docs-title-input:focus-visible {
+  border: none;
+  box-shadow: none;
+}
+
+.docs-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.docs-editor .ProseMirror {
+  flex: 1;
+  outline: none;
+  line-height: 1.6;
+}
+
+.docs-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--ink-3);
+  pointer-events: none;
+}
+
+.docs-editor .ProseMirror > * + * {
+  margin-top: var(--space-md);
+}
+
+.docs-editor .ProseMirror ul,
+.docs-editor .ProseMirror ol {
+  padding-left: var(--space-xl);
+}
+
+.docs-editor .ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.docs-editor .ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.docs-editor .ProseMirror ul[data-type="taskList"] li > label {
+  margin-top: 3px;
+}
+
+.docs-editor .ProseMirror pre {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+  overflow-x: auto;
+  font-size: var(--text-xs);
+}
+
+.docs-editor .ProseMirror blockquote {
+  border-left: 2px solid var(--line-strong);
+  padding-left: var(--space-md);
+  color: var(--ink-2);
 }
