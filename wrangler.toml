@@ -1,0 +1,26 @@
+name = "team-board"
+main = "worker/src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./frontend/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "team-board-db"
+database_id = "e982e1f9-fd8b-4e14-abef-28c1b01d88bc"
+migrations_dir = "migrations"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "cb96eb4354114b40adf8ea37cb5860b6"
+
+[[routes]]
+pattern = "team.devbppk.my.id"
+custom_domain = true
+
+[vars]
+# non-secret vars go here

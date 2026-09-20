@@ -1,0 +1,56 @@
+[tools]
+node = "24"
+
+[tasks.install]
+description = "Install all workspace dependencies"
+run = "npm install"
+
+[tasks."bootstrap:d1"]
+description = "Create the real D1 database (one-time) — paste the returned database_id into wrangler.toml"
+run = "npx wrangler d1 create team-board-db"
+
+[tasks."bootstrap:kv"]
+description = "Create the real KV namespace (one-time) — paste the returned id into wrangler.toml"
+run = "npx wrangler kv namespace create TEAM_BOARD_KV"
+
+[tasks."bootstrap:secrets"]
+description = "Set the Admin login secret on the deployed Worker (one-time, prompts for a value)"
+run = "npx wrangler secret put ADMIN_API_KEY"
+
+[tasks.migrate]
+description = "Apply D1 migrations to the local (sqlite) dev database"
+run = "npx wrangler d1 migrations apply team-board-db --local"
+
+[tasks."migrate:remote"]
+description = "Apply D1 migrations to the real (remote) database — run before deploying schema changes"
+run = "npx wrangler d1 migrations apply team-board-db --remote"
+
+[tasks."dev:worker"]
+description = "Run the Hono API on Cloudflare Workers local dev (port 8787)"
+run = "npx wrangler dev --port 8787 --local"
+
+[tasks."dev:frontend"]
+description = "Run the Vite dev server for the React SPA (port 5173, proxies /api to :8787)"
+dir = "frontend"
+run = "npx vite"
+
+[tasks.dev]
+description = "Run worker + frontend dev servers together (Ctrl-C stops both)"
+depends = ["dev:worker", "dev:frontend"]
+
+[tasks.typecheck]
+description = "Type-check worker and frontend (no emit)"
+run = "npm run typecheck"
+
+[tasks.test]
+description = "Run worker unit tests (schemas, access-key hashing, slug generation)"
+run = "npm run test"
+
+[tasks."build:frontend"]
+description = "Build the React SPA into frontend/dist, served by the Worker's assets binding"
+run = "npm run build:frontend"
+
+[tasks.deploy]
+description = "Build the frontend and deploy the single Worker (API + static assets) to Cloudflare"
+depends = ["build:frontend"]
+run = "npx wrangler deploy"

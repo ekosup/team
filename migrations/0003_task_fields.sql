@@ -1,0 +1,3 @@
+ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal';
+ALTER TABLE tasks ADD COLUMN assignee TEXT;
+ALTER TABLE tasks ADD COLUMN blocked_reason TEXT;

@@ -1,0 +1,20 @@
+{
+  "name": "team-board",
+  "private": true,
+  "workspaces": [
+    "worker",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "wrangler dev",
+    "build:frontend": "npm run build --workspace frontend",
+    "deploy": "npm run build:frontend && wrangler deploy",
+    "migrate:local": "wrangler d1 migrations apply team-board-db --local",
+    "migrate:remote": "wrangler d1 migrations apply team-board-db --remote",
+    "typecheck": "npm run typecheck --workspace worker && npm run typecheck --workspace frontend",
+    "test": "npm run test --workspace worker"
+  },
+  "devDependencies": {
+    "wrangler": "^4.83.0"
+  }
+}
